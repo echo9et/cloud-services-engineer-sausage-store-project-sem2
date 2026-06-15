@@ -15,11 +15,12 @@ frontend:
   service:
     port: 80
   ingress:
-    host: YOUR_STUDENT_HOSTNAME.students-projects.ru # Корректный домен будет указан в задании
+    host: front-echo9et.students-projects.ru # Корректный домен будет указан в задании
     path: /
     pathType: Prefix
+    tlsSecretName: 2sem-students-projects-wildcard-secret
   containerPort: 80
-  image: YOUR_DOCKERHUB/sausage-frontend:latest
+  image: echo9et/sausage-frontend:latest
   resources:
     requests:
       memory: "128Mi"
@@ -46,7 +47,7 @@ backend:
   replicas: 1
   strategy:
   ### Опишите стратегию RollingUpdate для бэкенда
-  image: YOUR_DOCKERHUB/sausage-backend:latest
+  image: echo9et/sausage-backend:latest
   imagePullPolicy: Always
   resources:
     requests:
