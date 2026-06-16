@@ -11,7 +11,6 @@ env:
   NEXUS_HELM_REPO_PASSWORD: ${{ secrets.NEXUS_HELM_REPO_PASSWORD }}
   SAUSAGE_STORE_NAMESPACE: r-devops-magistracy-project-2sem-1470092013
   KUBE_CONFIG: ${{ secrets.KUBE_CONFIG }}
-  VAULT_TOKEN: ${{ secrets.VAULT_TOKEN }}
   VERSION: "0.1.0"
 
 jobs:
@@ -64,7 +63,7 @@ jobs:
             context: ./backend-report/
             push: true
             tags: ${{ secrets.DOCKER_USER }}/sausage-backend-report:latest
-            
+
   # Упаковываем helm-чарт и пушим его в Nexus
   add_helm_chart_to_nexus:
       name: Add Helm Chart To Nexus
@@ -95,10 +94,8 @@ jobs:
         
         - name: Push chart to Nexus
           run: |
-            set -e
             curl -v -u ${{ env.NEXUS_HELM_REPO_USER }}:${{ env.NEXUS_HELM_REPO_PASSWORD }} \
-              --upload-file sausage-store-${{ env.VERSION }}.tgz \
-              ${{ env.NEXUS_HELM_REPO }}/sausage-store-${{ env.VERSION }}.tgz
+            --upload-file sausage-store-${{ env.VERSION }}.tgz ${{ env.NEXUS_HELM_REPO }}
         
         - name: Verify chart uploaded
           run: |
@@ -133,14 +130,8 @@ jobs:
             
         - name: Deploy with Helm
           run: |
-            set -e
-            export VERSION=${{ env.VERSION }}
-            if [ -f ./sausage-store-chart/values.yaml ]; then
-              envsubst < ./sausage-store-chart/values.yaml > ./values-resolved.yaml
-            fi
+            envsubst < ./sausage-store-chart/values.yaml > ./values-resolved.yaml
             helm upgrade --install sausage-store nexus/sausage-store \
               --namespace ${{ env.SAUSAGE_STORE_NAMESPACE }} \
               --values ./values-resolved.yaml \
-              --kubeconfig ./kubeconfig \
-              --create-namespace \
-              --version ${{ env.VERSION }}
+              --kubeconfig ./kubeconfig
