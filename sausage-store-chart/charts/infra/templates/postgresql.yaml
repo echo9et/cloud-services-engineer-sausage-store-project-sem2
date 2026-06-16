@@ -1,10 +1,27 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: postgresql-secret
+  namespace: {{ .Release.Namespace }}
+type: Opaque
+stringData:
+  POSTGRES_USER: {{ .Values.postgresql.env.POSTGRES_USER }}
+  POSTGRES_PASSWORD: {{ .Values.postgresql.env.POSTGRES_PASSWORD }}
+  POSTGRES_DB: {{ .Values.postgresql.env.POSTGRES_DB }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgresql-conf
+  namespace: {{ .Release.Namespace }}
+data:
+  POSTGRES_DB: {{ .Values.postgresql.env.POSTGRES_DB }}
 ---
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: postgresql
-  annotations:
-    helm.sh/hook-weight: "-5"
+  namespace: {{ .Release.Namespace }}
 spec:
   serviceName: postgresql
   replicas: 1
@@ -18,25 +35,20 @@ spec:
     spec:
       containers:
         - name: postgresql
-          image: postgres:15
+          image: {{ .Values.postgresql.image }}
+          ports:
+            - containerPort: {{ .Values.postgresql.containerPort }}
+          envFrom:
+            - secretRef:
+                name: postgresql-secret
           env:
             - name: PGDATA
               value: /var/lib/postgresql/data/pgdata
-          envFrom:
-            - configMapRef:
-                name: postgresql-conf
-          ports:
-            - containerPort: {{ .Values.postgresql.containerPort }}
-          resources:
-            requests:
-              memory: "128Mi"
-              cpu: "100m"
-            limits:
-              cpu: "100m"
-              memory: "256Mi"
           volumeMounts:
             - name: postgresql-data
               mountPath: /var/lib/postgresql/data
+          resources:
+{{ toYaml .Values.postgresql.resources | indent 12 }}
   volumeClaimTemplates:
     - metadata:
         name: postgresql-data
@@ -44,27 +56,19 @@ spec:
         accessModes: [ "ReadWriteOnce" ]
         resources:
           requests:
-            storage: 2Gi
+            storage: {{ .Values.postgresql.storage }}
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: postgresql
+  namespace: {{ .Release.Namespace }}
   labels:
     app: postgresql
 spec:
+  clusterIP: None
   ports:
     - port: {{ .Values.postgresql.containerPort }}
       targetPort: {{ .Values.postgresql.containerPort }}
   selector:
     app: postgresql
-  clusterIP: None
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: postgresql-conf
-data:
-  POSTGRES_USER: {{ .Values.postgresql.env.POSTGRESQL_INITDB_ROOT_USERNAME }}
-  POSTGRES_PASSWORD: {{ .Values.postgresql.env.POSTGRESQL_INITDB_ROOT_PASSWORD }}
-  POSTGRES_DB: {{ .Values.postgresql.env.POSTGRESQL_INITDB_ROOT_DB }}

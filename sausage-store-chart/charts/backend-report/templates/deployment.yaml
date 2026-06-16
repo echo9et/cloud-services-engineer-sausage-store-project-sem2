@@ -1,4 +1,3 @@
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -16,7 +15,7 @@ spec:
   revisionHistoryLimit: {{ .Values.revisionHistoryLimit }}
   replicas: {{ .Values.replicas }}
   strategy:
-{{ toYaml .Values.strategy | indent 4 }}
+    type: {{ .Values.strategy.type }}
   selector:
     matchLabels:
       app: {{ .Release.Name }}-{{ .Chart.Name }}
@@ -34,18 +33,13 @@ spec:
               valueFrom:
                 configMapKeyRef:
                   name: {{ .Release.Name }}-{{ .Chart.Name }}-conf
-                  key: port
+                  key: PORT
             - name: DB
               valueFrom:
-                configMapKeyRef:
-                  name: {{ .Release.Name }}-{{ .Chart.Name }}-conf
-                  key: db
+                secretKeyRef:
+                  name: {{ .Release.Name }}-{{ .Chart.Name }}-secret
+                  key: DB
+          ports:
+            - containerPort: {{ .Values.containerPort }}
           resources:
 {{ toYaml .Values.resources | indent 12 }}
-          ports:
-            - name: {{ .Chart.Name }}
-              containerPort: {{ .Values.containerPort }}
-          livenessProbe:
-{{ toYaml .Values.livenessProbe | indent 12 }}
-          readinessProbe:
-{{ toYaml .Values.readinessProbe | indent 12 }}

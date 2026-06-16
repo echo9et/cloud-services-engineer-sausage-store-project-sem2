@@ -12,27 +12,27 @@ global:
 
 
 frontend:
-### В чарте frontend отсутствуют некоторые важные файлы. Поймите какие и опишите их.
   replicas: 1
   revisionHistoryLimit: 15
   strategy:
     type: Recreate
   service:
     port: 80
+  global:
+    imagePullPolicy: Always
   ingress:
-    host: front-${DOCKER_USER}.students-projects.ru # Корректный домен будет указан в задании
+    host: front-echo9et.2sem.students-projects.ru
     path: /
     pathType: Prefix
-    tlsSecretName: 2sem-students-projects-wildcard-secret
   containerPort: 80
   image: ${DOCKER_USER}/sausage-frontend:latest
   resources:
     requests:
-      memory: "128Mi"
-      cpu: "100m"
+      memory: "32Mi"
+      cpu: "25m"
     limits:
       memory: "128Mi"
-      cpu: "1"
+      cpu: "50m"
   nginxConf: nginx.conf
 
 backend:
@@ -50,29 +50,30 @@ backend:
     port: 8080
   revisionHistoryLimit: 15
   replicas: 1
-  strategy:
-  ### Опишите стратегию RollingUpdate для бэкенда
+  strategy:    
+    type: RollingUpdate
+    rollingUpdate:
+       maxSurge: 25%
+       maxUnavailable: 25%
   image: ${DOCKER_USER}/sausage-backend:latest
   imagePullPolicy: Always
   resources:
     requests:
-      memory: "256Mi"
-      cpu: "100m"
+      memory: "128Mi"
+      cpu: "200m"
     limits:
-      memory: "512Mi"
-      cpu: "1"
+      memory: "256Mi"
+      cpu: "200m"
   containerPort: 8080
-  ### Опишите LivenessProbe для бэкенда
   livenessProbe:
     httpGet:
       path: /actuator/health
       port: 8080
     initialDelaySeconds: 90
     periodSeconds: 10
-  ### Опишите VPA для бэкенда
   vpa:
     updatePolicy:
-    updateMode: "Off"
+      updateMode: "Off"
     resourcePolicy:
       containerPolicies:
         - containerName: "*"
@@ -108,6 +109,21 @@ backend-report:
     targetCPUUtilizationPercentage: 70
 
 infra:
+  postgresql:
+    image: postgres:13
+    containerPort: 5432
+    storage: 2Gi
+    env:
+      POSTGRES_DB: sausage-store
+      POSTGRES_USER: store
+      POSTGRES_PASSWORD: storepassword
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "128Mi"
+      limits:
+        cpu: "500m"
+        memory: "512Mi"
   mongodb:
     image: mongo:7.0
     env:
@@ -126,19 +142,3 @@ infra:
       limits:
         cpu: "200m"
         memory: "256Mi"
-  
-  postgresql:
-    image: postgres:13
-    containerPort: 5432
-    storage: 2Gi
-    env:
-      POSTGRES_DB: sausage-store
-      POSTGRES_USER: store
-      POSTGRES_PASSWORD: storepassword
-    resources:
-      requests:
-        cpu: "100m"
-        memory: "128Mi"
-      limits:
-        cpu: "500m"
-        memory: "512Mi"
