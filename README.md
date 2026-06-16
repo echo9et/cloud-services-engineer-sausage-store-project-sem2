@@ -34,3 +34,13 @@ sudo http-server ./dist/frontend/ -p 80 --proxy http://localhost:8080
 ```
 
 Then open your browser and go to [http://localhost](http://localhost)
+
+```
+kubectl get pods -n r-devops-magistracy-project-2sem-1470092013
+NAME                                            READY   STATUS      RESTARTS        AGE
+mongodb-0                                       1/1     Running     0               28m
+mongodb-init-reports-kjbxb                      0/1     Completed   0               45s
+postgresql-0                                    1/1     Running     0               28m
+sausage-store-backend-59949459df-wgkcv          1/1     Running     0               11m
+sausage-store-backend-report-57dd89cdcb-thkn2   1/1     Running     7 (5m40s ago)   11m
+```
