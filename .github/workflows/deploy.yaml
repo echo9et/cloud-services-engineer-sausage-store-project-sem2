@@ -80,6 +80,9 @@ jobs:
         - name: Install Helm Push Plugin
           run: helm plugin install https://github.com/chartmuseum/helm-push
 
+        - name: Build Helm chart dependencies
+          run: helm dependency build ./sausage-store-chart
+
         - name: Package Helm chart
           run: helm package ./sausage-store-chart --version ${{ env.VERSION }}
 
